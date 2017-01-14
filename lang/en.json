@@ -1,0 +1,21 @@
+{
+	"m_title":"Dimmable Scene",
+	"m_descr":"<p>This app creates a dimmable scene with highly configurable options for how each light and switch responds to the master light level.</p><p>Each light can be configured with individual threshold levels and a response curve. Each switch can be configured to switch on and off at a particular level.</p><p>This allows you to smoothly transition from a dim setting with just a couple of lamps at a low level, up to all lights on at maximum brightness with each light coming on at an appropriate time and responding individually. Switches can also be added to turn on non-dimmable lights or other accessories at a desired level.</p><p>Other accessories which operate as multilevel switches can also be used - you could match your blinds to your light settings or have the colour of a light change with its brightness.</p>",
+	"l_dimmers":"Dimmers",
+	"l_switches":"Switches",
+	"l_min_level":"Minimum level",
+	"l_min_master_level":"Master level corresponding to this light's minimum level",
+	"l_off_below_min":"Switch off below minimum level",
+	"h_off_below_min":"If this is not selected the light will be set to its minimum level.",
+	"l_max_level":"Maximum level",
+	"l_max_master_level":"Master level corresponding to this light's maximum level",
+	"l_off_above_max":"Switch off above maximum level",
+	"h_off_above_max":"If this is not selected the light will be set to its maximum level.",
+	"l_expo":"Exponential factor",
+	"h_expo":"This sets the shape of the curve for the response of this light relative to the master level. Set to 1 for linear response, > 1 for less response at medium master levels, decimal value from 0 to 1 for more response at medium master levels.",
+	"l_on_level":"Switch on at master level",
+	"l_off_level":"Switch off at master level",
+	"l_setSameLevel":"Don't send command if level has not changed",
+	"h_setSameLevel":"Minimises network traffic.",
+	"h_switch_levels":"Switch will be on between Min and Max levels, off at all other levels."
+}

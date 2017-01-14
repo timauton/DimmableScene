@@ -1,0 +1,196 @@
+{
+	"dependencies": [],
+	"singleton": false,
+	"category": "complex_applications",
+	"author": "Tim Auton",
+	"homepage": "https://github.com/timauton",
+	"icon": "icon.png",
+    "moduleName":"DimmableScene",
+	"version": "0.9",
+	"maturity": "beta",
+	"repository": {
+		"type": "git",
+		"source": "https://github.com/timauton/DimmableScene"
+	},
+	"defaults": {
+		"title": "__m_title__",
+		"description": "__m_descr__",
+		"switches": [],
+		"dimmers": []
+	},
+	"schema": {
+		"type": "object",
+		"properties": {
+			"dimmers": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"properties": {
+						"device": {
+							"field": "enum",
+							"datasource": "namespaces",
+							"enum": "namespaces:devices_switchMultilevel:deviceId",
+							"required": true
+						},
+						"minLevel": {
+							"type": "integer",
+							"minimum": 0,
+							"maximum": 99,
+							"required": true
+						},
+						"minMasterLevel": {
+							"type": "integer",
+							"minimum": 0,
+							"maximum": 99,
+							"required": true
+						},
+						"offBelowMin": {
+							"type": "boolean",
+							"required": true,
+							"default" : false
+						},
+						"maxLevel": {
+							"type": "integer",
+							"minimum": 0,
+							"maximum": 99,
+							"required": true
+						},
+						"maxMasterLevel": {
+							"type": "integer",
+							"minimum": 0,
+							"maximum": 99,
+							"required": true
+						},
+						"offAboveMax": {
+							"type": "boolean",
+							"required": true,
+							"default" : false
+						},
+						"expo": {
+							"type": "number",
+							"minimum": 0,
+							"required": true,
+							"default":1
+						},
+						"setSameLevel": {
+							"type": "boolean",
+							"required": true,
+							"default" : false
+						}
+					}
+				}
+			},
+			"switches": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"properties": {
+						"device": {
+							"field": "enum",
+							"datasource": "namespaces",
+							"enum": "namespaces:devices_switchBinary:deviceId",
+							"required": true
+						},
+						"minLevel": {
+							"type": "integer",
+							"minimum": 0,
+							"maximum": 99,
+							"required": true
+						},
+						"maxLevel": {
+							"type": "integer",
+							"minimum": 0,
+							"maximum": 99,
+							"required": true
+						},
+						"setSameLevel": {
+							"type": "boolean",
+							"required": true,
+							"default" : false
+						}
+					}
+				}
+			}
+		},
+		"required": false
+	},
+	"options": {
+		"fields": {
+			"dimmers": {
+				"label": "__l_dimmers__",
+				"fields": {
+					"item": {
+						"fields": {
+							"device": {
+								"label": "",
+								"type": "select",
+								"datasource": "namespaces",
+								"field": "optionLabels",
+								"optionLabels": "namespaces:devices_switchMultilevel:deviceName"
+							},
+							"minLevel": {
+								"label": "__l_min_level__"
+							},
+							"minMasterLevel": {
+								"label": "__l_min_master_level__"
+							},
+							"offBelowMin": {
+								"type": "checkbox",
+								"rightLabel": "__l_off_below_min__",
+								"helper": "__h_off_below_min__"
+							},
+							"maxLevel": {
+								"label": "__l_max_level__"
+							},
+							"maxMasterLevel": {
+								"label": "__l_max_master_level__"
+							},
+							"offAboveMax": {
+								"type": "checkbox",
+								"rightLabel": "__l_off_above_max__",
+								"helper": "__h_off_above_max__"
+							},
+							"expo": {
+								"label": "__l_expo__",
+								"helper":"__h_expo__"
+							},
+							"setSameLevel": {
+								"type": "checkbox",
+								"rightLabel": "__l_setSameLevel__",
+								"helper": "__h_setSameLevel__"
+							}
+						}
+					}
+				}
+			},
+			"switches": {
+				"label": "__l_switches__",
+				"fields": {
+					"item": {
+						"fields": {
+							"device": {
+								"label": "",
+								"type": "select",
+								"datasource": "namespaces",
+								"field": "optionLabels",
+								"optionLabels": "namespaces:devices_switchBinary:deviceName"
+							},
+							"minLevel": {
+								"label": "__l_min_level__"
+							},
+							"maxLevel": {
+								"label": "__l_max_level__",
+								"helper": "__h_switch_levels__"
+							},
+							"setSameLevel": {
+								"type": "checkbox",
+								"rightLabel": "__l_setSameLevel__",
+								"helper": "__h_setSameLevel__"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
