@@ -1,6 +1,6 @@
 # DimmableScene
 
-This is a module for the ZWay home automation system: http://http://z-wave.me
+This is a module for the ZWay home automation system: http://z-wave.me
 
 This app creates a dimmable scene with highly configurable options for how each light and switch responds to the master light level.
 
@@ -15,4 +15,5 @@ To download from the ZWay app store go to Settings > Management > App Store Acce
 To install manually:
 
 cd /opt/z-way-server/automation/userModules
+
 sudo git clone https://github.com/timauton/DimmableScene.git
