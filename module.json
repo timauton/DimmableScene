@@ -6,8 +6,8 @@
 	"homepage": "https://github.com/timauton",
 	"icon": "icon.png",
     "moduleName":"DimmableScene",
-	"version": "0.9",
-	"maturity": "beta",
+	"version": "1.0",
+	"maturity": "stable",
 	"repository": {
 		"type": "git",
 		"source": "https://github.com/timauton/DimmableScene"

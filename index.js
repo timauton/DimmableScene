@@ -35,57 +35,63 @@ DimmableScene.prototype.init = function (config) {
         },
         overlay: {},
         handler: function(command, args) {
-            self.config.dimmers.forEach(function(thisDev) {
-            
-                var vDev = self.controller.devices.get(thisDev.device);
-                
-                // calculate the target level from curve parameters
-				var masterScaled = (args.level-thisDev.minMasterLevel)/(thisDev.maxMasterLevel-thisDev.minMasterLevel);
-				var lightScale = thisDev.maxLevel-thisDev.minLevel+1;
-				var targetLevel = Math.round(lightScale*Math.pow(masterScaled,thisDev.expo))+thisDev.minLevel;
+        	if (command == "exact") {
+				self.config.dimmers.forEach(function(thisDev) {
+			
+					var vDev = self.controller.devices.get(thisDev.device);
+					var setLevel = parseInt(args.level);
 				
-				// below minMasterLevel the above calculation is undefined
-				if (isNaN(targetLevel)) {
-					targetLevel = thisDev.minLevel;
-				}
-				// deal with rounding issues
-				if (targetLevel < 1) {
-					targetLevel = 1;
-				} else if (targetLevel > 99) {
-					targetLevel = 99;
-				}
-				// don't go over max or under min
-				if (targetLevel < thisDev.minLevel) {
-					targetLevel = thisDev.minLevel;
-				}
-				if (targetLevel > thisDev.maxLevel) {
-					targetLevel = thisDev.maxLevel;
-				}
-				// make sure we're off if we're below the master level, of if master level is zero
-				if ((args.level < thisDev.minMasterLevel && thisDev.offBelowMin)
-					|| (args.level > thisDev.maxMasterLevel && thisDev.offAboveMax)
-					|| args.level == 0
-					) {
-					targetLevel = 0;
-				}
+					// calculate the target level from curve parameters
+					var masterScaled = (setLevel-thisDev.minMasterLevel)/(thisDev.maxMasterLevel-thisDev.minMasterLevel);
+					var lightScale = thisDev.maxLevel-thisDev.minLevel+1;
+					var targetLevel = Math.round(lightScale*Math.pow(masterScaled,thisDev.expo))+thisDev.minLevel;
 				
-				if (vDev) {
-					if (!thisDev.setSameLevel || (thisDev.setSameLevel && vDev.get("metrics:level") != targetLevel)) {
-						console.log("Dimmable Scene " + self.id + " : Setting " + thisDev.device + " to " + targetLevel);
-						vDev.performCommand("exact", { level: targetLevel });
+					// below minMasterLevel the above calculation is undefined
+					if (isNaN(targetLevel)) {
+						targetLevel = thisDev.minLevel;
 					}
-				}
-            });
-            self.config.switches.forEach(function(thisDev) {
-                var vDev = self.controller.devices.get(thisDev.device);
-                var targetLevel = (args.level >= thisDev.minLevel && args.level <= thisDev.maxLevel) ? "on" : "off";
-                if (vDev) {
-                    if (!thisDev.setSameLevel || (thisDev.setSameLevel && vDev.get("metrics:level") != targetLevel)) {
-                        vDev.performCommand(targetLevel);
-                    }
-                }
-            });
-            self.vDev.set("metrics:level",args.level);
+					// deal with rounding issues
+					if (targetLevel < 1) {
+						targetLevel = 1;
+					} else if (targetLevel > 99) {
+						targetLevel = 99;
+					}
+					// don't go over max or under min
+					if (targetLevel < thisDev.minLevel) {
+						targetLevel = thisDev.minLevel;
+					}
+					if (targetLevel > thisDev.maxLevel) {
+						targetLevel = thisDev.maxLevel;
+					}
+					// make sure we're off if we're below the master level, of if master level is zero
+					if ((setLevel < thisDev.minMasterLevel && thisDev.offBelowMin)
+						|| (setLevel > thisDev.maxMasterLevel && thisDev.offAboveMax)
+						|| setLevel == 0
+						) {
+						targetLevel = 0;
+					}
+				
+					if (vDev) {
+						if (!thisDev.setSameLevel || (thisDev.setSameLevel && vDev.get("metrics:level") != targetLevel)) {
+							console.log("Dimmable Scene " + self.id + " : Setting " + thisDev.device + " to " + targetLevel);
+							vDev.performCommand("exact", { level: targetLevel });
+						}
+					}
+				});
+				self.config.switches.forEach(function(thisDev) {
+					var vDev = self.controller.devices.get(thisDev.device);
+					var setLevel = parseInt(args.level);
+				
+					var targetLevel = (setLevel >= thisDev.minLevel && setLevel <= thisDev.maxLevel) ? "on" : "off";
+				
+					if (vDev) {
+						if (!thisDev.setSameLevel || (thisDev.setSameLevel && vDev.get("metrics:level") != targetLevel)) {
+							vDev.performCommand(targetLevel);
+						}
+					}
+				});
+				self.vDev.set("metrics:level",parseInt(args.level));
+			}
         },
         moduleId: this.id
     });
