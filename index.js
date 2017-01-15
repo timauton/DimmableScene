@@ -23,7 +23,7 @@ DimmableScene.prototype.init = function (config) {
 	DimmableScene.super_.prototype.init.call(this, config);
 	var self = this;
 	
-	var vDev = self.controller.devices.create({
+	this.vDev = self.controller.devices.create({
         deviceId: "DimmableScene_" + this.id,
         defaults: {
             deviceType: "switchMultilevel",
@@ -85,6 +85,7 @@ DimmableScene.prototype.init = function (config) {
                     }
                 }
             });
+            self.vDev.set("metrics:level",args.level);
         },
         moduleId: this.id
     });
