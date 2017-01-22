@@ -1,6 +1,6 @@
  /*** DimmableScene Z-Way HA module *******************************************
 
-Version: 1.0
+Version: 1.1
 (c) Tim Auton 2017
 -----------------------------------------------------------------------------
 Author: Tim Auton tim@uton.org
@@ -28,76 +28,122 @@ DimmableScene.prototype.init = function (config) {
         defaults: {
             deviceType: "switchMultilevel",
             metrics: {
-                title: "Dimmable Scene " + this.id,
+                title: "Dimmable Scene" + this.id,
                 icon: "multilevel",
-                level: 0
+                level: 0,
+                lastLevel: 99
             }
         },
         overlay: {},
         handler: function(command, args) {
         	if (command == "exact") {
+        	
+				var setLevel = parseInt(args.level);
+				setLevel = (setLevel < 0) ? 0 : (setLevel > 99) ? 99 : setLevel;
+        	
 				self.config.dimmers.forEach(function(thisDev) {
 			
 					var vDev = self.controller.devices.get(thisDev.device);
-					var setLevel = parseInt(args.level);
 				
 					// calculate the target level from curve parameters
-					var masterScaled = (setLevel-thisDev.minMasterLevel)/(thisDev.maxMasterLevel-thisDev.minMasterLevel);
+					var masterScaled = (setLevel-thisDev.minMasterLevel)/(thisDev.maxMasterLevel-thisDev.minMasterLevel+1);
 					var lightScale = thisDev.maxLevel-thisDev.minLevel+1;
 					var targetLevel = Math.round(lightScale*Math.pow(masterScaled,thisDev.expo))+thisDev.minLevel;
-				
+					
+					// console.log("Dimmable Scene: initially calculated targetLevel is " + targetLevel);
+					
 					// below minMasterLevel the above calculation is undefined
-					if (isNaN(targetLevel)) {
+					if (isNaN(targetLevel) || setLevel <= thisDev.minMasterLevel) {
 						targetLevel = thisDev.minLevel;
 					}
-					// deal with rounding issues
-					if (targetLevel < 1) {
-						targetLevel = 1;
-					} else if (targetLevel > 99) {
-						targetLevel = 99;
-					}
-					// don't go over max or under min
-					if (targetLevel < thisDev.minLevel) {
-						targetLevel = thisDev.minLevel;
-					}
-					if (targetLevel > thisDev.maxLevel) {
+					if (setLevel >= thisDev.maxMasterLevel) {
 						targetLevel = thisDev.maxLevel;
 					}
-					// make sure we're off if we're below the master level, of if master level is zero
+					
+					// deal with rounding issues
+					targetLevel = (targetLevel < 1) ? 1 : (targetLevel > 99) ? 99 : targetLevel;
+					
+					// don't go over max or under min, reverse it to deal with negative slopes
+					if (thisDev.minLevel <= thisDev.maxLevel) {
+						targetLevel = (targetLevel < thisDev.minLevel) ? thisDev.minLevel : targetLevel;
+						targetLevel = (targetLevel > thisDev.maxLevel) ? thisDev.maxLevel : targetLevel;
+					} else {
+						targetLevel = (targetLevel > thisDev.minLevel) ? thisDev.minLevel : targetLevel;
+						targetLevel = (targetLevel < thisDev.maxLevel) ? thisDev.maxLevel : targetLevel;
+					}
+					
+					// make sure we're off if we're below the master level, or if master level is zero
 					if ((setLevel < thisDev.minMasterLevel && thisDev.offBelowMin)
 						|| (setLevel > thisDev.maxMasterLevel && thisDev.offAboveMax)
 						|| setLevel == 0
 						) {
 						targetLevel = 0;
 					}
-				
-					if (vDev) {
-						if (!thisDev.setSameLevel || (thisDev.setSameLevel && vDev.get("metrics:level") != targetLevel)) {
-							console.log("Dimmable Scene " + self.id + " : Setting " + thisDev.device + " to " + targetLevel);
-							vDev.performCommand("exact", { level: targetLevel });
-						}
+					
+					// see if any of the conditions for skipping the update are met
+					var skipUpdate = (setLevel < thisDev.minMasterLevel && thisDev.ignoreBelowMin)
+									|| (setLevel > thisDev.maxMasterLevel && thisDev.ignoreAboveMax)
+									|| (thisDev.dontSetSameLevel && vDev.get("metrics:level") == targetLevel)
+					
+					if (vDev && !skipUpdate) {
+						console.log("Dimmable Scene " + self.id + " : Setting " + thisDev.device + " to " + targetLevel);
+						vDev.performCommand("exact", { level: targetLevel });
+					} else {
+						console.log("Dimmable Scene " + self.id + " : skipping " + thisDev.device);
 					}
 				});
 				self.config.switches.forEach(function(thisDev) {
 					var vDev = self.controller.devices.get(thisDev.device);
-					var setLevel = parseInt(args.level);
 				
 					var targetLevel = (setLevel >= thisDev.minLevel && setLevel <= thisDev.maxLevel) ? "on" : "off";
 				
-					if (vDev) {
-						if (!thisDev.setSameLevel || (thisDev.setSameLevel && vDev.get("metrics:level") != targetLevel)) {
-							vDev.performCommand(targetLevel);
-						}
+					var skipUpdate = (setLevel < thisDev.minMasterLevel && thisDev.ignoreBelowMin)
+									|| (setLevel > thisDev.maxMasterLevel && thisDev.ignoreAboveMax)
+									|| (thisDev.dontSetSameLevel && vDev.get("metrics:level") == targetLevel)
+				
+					if (vDev && !skipUpdate) {
+						vDev.performCommand(targetLevel);
 					}
 				});
-				self.vDev.set("metrics:level",parseInt(args.level));
+				if (self.vDev.get("metrics:level") != 0 && setLevel != self.vDev.get("metrics:lastLevel")) {
+					self.vDev.set("metrics:lastLevel",self.vDev.get("metrics:level"));
+				}
+				self.vDev.set("metrics:level",setLevel);
 			}
         },
         moduleId: this.id
     });
+    
+	if (self.config.lastLevelButton) {
+		this.buttonVDev = self.controller.devices.create({
+			deviceId: "DimmableScene_" + this.id + "_button",
+			defaults: {
+				deviceType: "toggleButton",
+				metrics: {
+					title: "Dimmable Scene" + this.id + "Last Level"
+				}
+			},
+			overlay: {},
+			handler: function(command, args) {
+				if (command == "on") {
+					var lastLevel = self.vDev.get("metrics:lastLevel");
+					var currentLevel = self.vDev.get("metrics:level");
+					self.vDev.set("metrics:lastLevel",currentLevel);
+					self.vDev.performCommand("exact",{ level: lastLevel });
+				}
+			},
+			moduleId: this.id
+		});
+	}
 };
 
 // Destructor
 DimmableScene.prototype.stop = function () {
+	if (this.vDev) {
+		this.controller.devices.remove(this.vDev.id);
+	}
+	if (this.buttonVDev) {
+		this.controller.devices.remove(this.buttonVDev.id);
+	}
 	DimmableScene.super_.prototype.stop.call(this);
 };
