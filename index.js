@@ -36,22 +36,32 @@ DimmableScene.prototype.init = function (config) {
         },
         overlay: {},
         handler: function(command, args) {
+        	
+        	var setLevel = -1;
+        	
         	if (command == "exact") {
-        	
-				var setLevel = parseInt(args.level);
+        		setLevel = parseInt(args.level);
 				setLevel = (setLevel < 0) ? 0 : (setLevel > 99) ? 99 : setLevel;
-        	
-				self.config.dimmers.forEach(function(thisDev) {
+        	}
+        	if (command == "on" && self.vDev.get("metrics:level") == 0) {
+        		setLevel = 99;
+        	}
+        	if (command == "off") {
+        		setLevel = 0;
+        	}
 			
+			if (setLevel != -1) {
+				self.config.dimmers.forEach(function(thisDev) {
+		
 					var vDev = self.controller.devices.get(thisDev.device);
-				
+			
 					// calculate the target level from curve parameters
 					var masterScaled = (setLevel-thisDev.minMasterLevel)/(thisDev.maxMasterLevel-thisDev.minMasterLevel+1);
 					var lightScale = thisDev.maxLevel-thisDev.minLevel+1;
 					var targetLevel = Math.round(lightScale*Math.pow(masterScaled,thisDev.expo))+thisDev.minLevel;
-					
+				
 					// console.log("Dimmable Scene: initially calculated targetLevel is " + targetLevel);
-					
+				
 					// below minMasterLevel the above calculation is undefined
 					if (isNaN(targetLevel) || setLevel <= thisDev.minMasterLevel) {
 						targetLevel = thisDev.minLevel;
@@ -59,10 +69,10 @@ DimmableScene.prototype.init = function (config) {
 					if (setLevel >= thisDev.maxMasterLevel) {
 						targetLevel = thisDev.maxLevel;
 					}
-					
+				
 					// deal with rounding issues
 					targetLevel = (targetLevel < 1) ? 1 : (targetLevel > 99) ? 99 : targetLevel;
-					
+				
 					// don't go over max or under min, reverse it to deal with negative slopes
 					if (thisDev.minLevel <= thisDev.maxLevel) {
 						targetLevel = (targetLevel < thisDev.minLevel) ? thisDev.minLevel : targetLevel;
@@ -71,7 +81,7 @@ DimmableScene.prototype.init = function (config) {
 						targetLevel = (targetLevel > thisDev.minLevel) ? thisDev.minLevel : targetLevel;
 						targetLevel = (targetLevel < thisDev.maxLevel) ? thisDev.maxLevel : targetLevel;
 					}
-					
+				
 					// make sure we're off if we're below the master level, or if master level is zero
 					if ((setLevel < thisDev.minMasterLevel && thisDev.offBelowMin)
 						|| (setLevel > thisDev.maxMasterLevel && thisDev.offAboveMax)
@@ -79,12 +89,12 @@ DimmableScene.prototype.init = function (config) {
 						) {
 						targetLevel = 0;
 					}
-					
+				
 					// see if any of the conditions for skipping the update are met
 					var skipUpdate = (setLevel < thisDev.minMasterLevel && thisDev.ignoreBelowMin)
 									|| (setLevel > thisDev.maxMasterLevel && thisDev.ignoreAboveMax)
 									|| (thisDev.dontSetSameLevel && vDev.get("metrics:level") == targetLevel)
-					
+				
 					if (vDev && !skipUpdate) {
 						console.log("Dimmable Scene " + self.id + " : Setting " + thisDev.device + " to " + targetLevel);
 						vDev.performCommand("exact", { level: targetLevel });
@@ -94,22 +104,22 @@ DimmableScene.prototype.init = function (config) {
 				});
 				self.config.switches.forEach(function(thisDev) {
 					var vDev = self.controller.devices.get(thisDev.device);
-				
+			
 					var targetLevel = (setLevel >= thisDev.minLevel && setLevel <= thisDev.maxLevel) ? "on" : "off";
-				
+			
 					var skipUpdate = (setLevel < thisDev.minMasterLevel && thisDev.ignoreBelowMin)
 									|| (setLevel > thisDev.maxMasterLevel && thisDev.ignoreAboveMax)
 									|| (thisDev.dontSetSameLevel && vDev.get("metrics:level") == targetLevel)
-				
+			
 					if (vDev && !skipUpdate) {
 						vDev.performCommand(targetLevel);
 					}
 				});
-				if (self.vDev.get("metrics:level") != 0 && setLevel != self.vDev.get("metrics:lastLevel")) {
-					self.vDev.set("metrics:lastLevel",self.vDev.get("metrics:level"));
-				}
-				self.vDev.set("metrics:level",setLevel);
 			}
+			if (self.vDev.get("metrics:level") != 0 && setLevel != self.vDev.get("metrics:lastLevel")) {
+				self.vDev.set("metrics:lastLevel",self.vDev.get("metrics:level"));
+			}
+			self.vDev.set("metrics:level",setLevel);
         },
         moduleId: this.id
     });
