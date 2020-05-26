@@ -1,3 +1,5 @@
+# Archived as I no longer use ZWay so am unable to maintain this code
+
 # DimmableScene
 
 This is a module for the ZWay home automation system: http://z-wave.me
